@@ -1,0 +1,23 @@
+[
+    {
+        "id": "1",
+        "image": "template1.png",
+        "prompt": "I am a cyber style."
+    },
+    {
+        "id": "2",
+        "image": "template2.png",
+        "prompt": "I am a cartoon style."
+    },
+    {
+        "id": "3",
+        "image": "template3.png",
+        "prompt": "I am an anime style."
+    },
+    {
+        "id": "4",
+        "image": "template4.png",
+        "prompt": "I am an artistic style."
+    }
+    
+]

@@ -1,0 +1,455 @@
+<template>
+	<Header></Header>
+	<Loading :showLoading="showLoading" />
+	<div>
+		<!-- 页面内容 -->
+		<div class="container">
+			<div class="banner">
+				<img src="../assets/images/banner.png" mode=""></img>
+				<p>AON PULID</p>
+				<p>一键进行图片风格变化</p>
+			</div>
+			<div class="uni-form-item uni-column">
+				<div class="title">上传图片</div>
+
+				<div class="content">
+					<div class="upload upload-done" v-if="imgUrl">
+						<img class="upload-res" :src="imgUrl" mode=""></img>
+						<img class="deleteIcon" @click="deleteImg" src="../assets/icons/delete.png" mode=""></img>
+					</div>
+					<van-uploader v-else style="width: 100%" :max-size="maxSize" @oversize="onOversize"
+						:after-read="afterRead">
+
+						<div class="upload upload-before">
+							<img class="uploadIcon" src="../assets/icons/uploadImg.png" mode=""></img>
+							<text>最大30MB</text>
+						</div>
+					</van-uploader>
+
+
+				</div>
+
+			</div>
+
+			<!-- <div class="uni-form-item uni-column">
+				<div class="title">Customize your clothing logo</div>
+				<div class="content">
+					<input v-model="prompt" name="input" placeholder="Please enter the logo text on your clothes" />
+				</div>
+			</div> -->
+
+			<div class="uni-form-item uni-column">
+				<div class="title">选择风格模板</div>
+				<div class="templateCon" v-if="templateList.length > 0">
+					<div v-for="(item, index) in templateList"
+						:class="`template_item ${Number(item.id) === templateId ? 'templateActive' : ''}`"
+						@click="selectTemplate(Number(item.id), item.image, item.prompt)" :key="index">
+						<img :src="item.image" alt="" />
+						<div :class="`isActiveIcon ${Number(item.id) === templateId ? 'active' : ''}`">
+							<img src="../assets/icons/selectIcon.png" alt="" v-if="Number(item.id) === templateId">
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="uni-form-item error-text" v-if="showError">
+				<div class="content">Please Upload your photos</div>
+			</div>
+			<div class="bottom_btn">
+				<div class="spendCount">
+					<img class="icon" src="../assets/icons/money.png" mode=""></img>
+					<text>-8</text>
+				</div>
+				<button class="submitBtn" @click="formSubmit">
+					<text>生成风格照片</text>
+				</button>
+			</div>
+
+
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import { showToast } from 'vant';
+import { useRouter } from 'vue-router'
+
+import { AI } from 'aonweb'
+import { getTemplate } from '../lib/getTemplate'
+
+import 'vant/lib/index.css';
+import Header from '../components/Header.vue';
+import Loading from '../components/Loading.vue';
+
+const router = useRouter()
+
+const showLoading = ref(false);
+const showError = ref(false);
+const swapImgUrl = ref('');
+const imgUrl = ref('');
+const submitImgUrl = ref('');
+const templateList = ref([]);
+const templateId = ref(1);
+const prompt = ref('');
+
+const maxSize = 30 * 1024 * 1024;
+function goToComplete(url) {
+	const query = { url: url }
+	router.push({
+		path: '/created',
+		query
+	})
+}
+
+const onOversize = (file) => {
+	showToast('文件大小不能超过 30MB');
+};
+
+function afterRead(file) {
+	const formData = new FormData();
+	formData.append('file', file.file);
+
+	// 调用上传接口
+	uploadFile(formData).then(res => {
+		if (res.code == 200 && res.data && res.data.length) {
+			submitImgUrl.value = res.data
+		}
+
+	}).catch(err => {
+		showToast('image upload failed');
+		console.log(err);
+	});
+
+	imgUrl.value = URL.createObjectURL(file.file);
+
+}
+// 上传接口
+const uploadFile = async (formData) => {
+	const response = await fetch('https://tmp-file.aigic.ai/api/v1/upload?expires=1800&type=image/png', {
+		method: 'POST',
+		body: formData
+	});
+
+	const data = await response.json();
+	return data;
+};
+
+function deleteImg() {
+	if (imgUrl.value) {
+		const formData = new FormData();
+		formData.append('file', imgUrl.value);
+
+		// 删除文件
+		formData.delete('file');
+		imgUrl.value = null;
+		submitImgUrl.value = null
+
+		console.log('File deleted:', formData.get('file'));
+	} else {
+		console.log('No file to delete')
+	}
+}
+
+
+const formSubmit = async () => {
+	console.log(swapImgUrl.value, submitImgUrl.value)
+	if (!imgUrl.value || !submitImgUrl.value || !swapImgUrl.value) {
+		showError.value = true
+
+		setTimeout(() => {
+			showError.value = false
+		}, 3000)
+		return
+	}
+	showLoading.value = true
+	try {
+		// AI 使用方法
+		const ai_options = {
+			//Please replace with your own API key or jwt token.
+			auth: "Rbhpcp0FKNrYNA1nZkrwrIbD0YSSRlVG",
+			// host: "http://localhost:8080"
+		}
+
+		const aonet = new AI(ai_options)
+
+		const data = {
+			input: {
+				"prompt": prompt.value,
+				"cfg_scale": 1.2,
+				"num_steps": 4,
+				"image_width": 768,
+				"num_samples": 4,
+				"image_height": 1024,
+				"output_format": "webp",
+				"identity_scale": 0.8,
+				"mix_identities": false,
+				"output_quality": 80,
+				"generation_mode": "fidelity",
+				"main_face_image": submitImgUrl.value,
+				"negative_prompt": "flaws in the eyes, flaws in the face, flaws, lowres, non-HDRi, low quality, worst quality,artifacts noise, text, watermark, glitch, deformed, mutated, ugly, disfigured, hands, low resolution, partially rendered objects, deformed or partially rendered eyes, deformed, deformed eyeballs, cross-eyed,blurry"
+			}
+		}  
+		console.log("formSubmit data", data);    
+		let response = await aonet.prediction("/predictions/ai/face-swap", data); 
+		if (response.task.exec_code == 200 && response.task.is_success) {
+			showLoading.value = false
+
+			let url = response.output
+			if (Array.isArray(response.output)) {
+				url = response.output && response.output.length && response.output[0]
+			}
+			if (typeof url == 'object' || typeof url == 'Object') {
+				return
+			}
+
+			goToComplete(url)
+		} else {
+			showLoading.value = false
+			showToast('AI processing failed')
+		}
+	} catch (error) {
+		showLoading.value = false
+		showToast('AI processing failed')
+	}
+
+}
+
+async function getTemplateList() {
+	try {
+		const list = await getTemplate()
+		templateList.value = list
+		swapImgUrl.value = list[0].image
+		prompt.value = list[0],prompt
+	} catch (error) {
+		console.log(error)
+	}
+}
+
+function selectTemplate(id, imageUrl, prompt_) {
+	console.log("imageUrl", imageUrl)
+	templateId.value = id
+	swapImgUrl.value = imageUrl
+	prompt.value = prompt_
+}
+
+onMounted(() => {
+	getTemplateList()
+})
+
+</script>
+
+<style scoped>
+.banner {
+	width: 100%;
+	height: 27.73vw;
+	margin-top: 8.53vw;
+	margin-bottom: 8.53vw;
+	position: relative;
+	padding: 4.27vw;
+}
+
+.banner img {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.banner p {
+	position: relative;
+	z-index: 10;
+	font-family: Roboto-Black;
+	font-weight: 900;
+	font-size: 6.4vw;
+	color: #FFFFFF;
+	text-align: left;
+	font-style: normal;
+	text-transform: none;
+}
+
+.banner p:last-child {
+	width: 49.07vw;
+	font-family: Roboto-Regular;
+	font-weight: 400;
+	font-size: 2.4vw;
+	color: #FFFFFF;
+	line-height: 4.27vw;
+	text-align: left;
+	font-style: normal;
+	text-transform: none;
+}
+
+.uni-form-item .title {
+	font-family: Roboto-Bold;
+	font-weight: bold;
+	font-size: 3.73vw;
+	color: #000000;
+	text-align: left;
+	font-style: normal;
+	text-transform: none;
+	margin-bottom: 2.13vw;
+}
+
+.uni-form-item {
+	margin-bottom: 8.53vw;
+}
+
+.uni-form-item .content {
+	width: 100%;
+	height: 14.93vw;
+	background: #F1F1F1;
+	border-radius: 1.07vw;
+	display: flex;
+	align-items: center;
+	padding: 0 3.2vw;
+	box-sizing: border-box;
+
+}
+.error-text{
+	width: 86.67vw;
+	position: fixed;
+	bottom: 21.6vw;
+	
+}
+.error-text .content {
+	background-color: #F3A32B;
+	font-size: 3.2vw;
+	color: #fff;
+}
+
+.uni-form-item .content input {
+	width: 100%;
+	font-size: 3.2vw;
+	font-family: Roboto-Regular;
+	border: none;
+	outline: none;
+	background-color: #F1F1F1;
+}
+
+.upload {
+	width: 100%;
+	display: flex;
+	align-items: center;
+}
+
+.upload-before text {
+	color: #575757;
+	font-size: 3.2vw;
+	font-family: Roboto-Regular;
+}
+
+.upload-done {
+	justify-content: space-between;
+}
+
+.uploadIcon {
+	width: 6.4vw;
+	height: 6.4vw;
+	margin-right: 2.13vw;
+}
+
+.upload-res {
+	width: auto;
+	max-height: 8.53vw;
+}
+
+.deleteIcon {
+	height: 5.07vw;
+	width: 5.07vw;
+}
+
+
+.bottom_btn .spendCount {
+	width: 19.2vw;
+	height: 9.07vw;
+	background: #F1F1F1;
+	border-radius: 1.07vw;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.bottom_btn .spendCount .icon {
+	height: 6.4vw;
+	width: 6.4vw;
+	margin-right: 1.07vw;
+}
+
+.bottom_btn .submitBtn {
+	width: 64.8vw;
+	height: 9.07vw;
+	background: #000000;
+	box-shadow: 1.07vw 1.07vw 2.13vw .13vw rgba(0, 0, 0, 0.32);
+	border-radius: 1.07vw;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+}
+
+.bottom_btn .submitBtn text {
+	font-size: 3.73vw;
+	font-weight: bold;
+	background: linear-gradient(182deg, #2F54EB 0%, #FF26A8 100%);
+	-webkit-background-clip: text;
+	color: transparent;
+	background-clip: text;
+}
+
+.templateCon {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	height: auto;
+	background: transparent;
+}
+
+.template_item {
+	width: 24.8vw;
+	height: 44vw;
+	background: #F1F1F1;
+	border-radius: 1.07vw;
+	margin-bottom: 4.53vw;
+	position: relative;
+	overflow: hidden;
+	box-sizing: border-box;
+
+}
+
+.template_item img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.templateActive {
+	border: .27vw solid #000;
+
+}
+
+.isActiveIcon {
+	position: absolute;
+	bottom: 1.6vw;
+	right: 1.6vw;
+	width: 3.2vw;
+	height: 3.2vw;
+	background: #FFFFFF;
+	border: .27vw solid #000000;
+	border-radius: 50%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.isActiveIcon img{
+	height: 2.13vw;
+	width: 2.13vw;
+}
+
+.active{
+	background: #EBCC2F;
+}
+</style>
