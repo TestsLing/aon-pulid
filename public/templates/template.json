@@ -7,17 +7,17 @@
     {
         "id": "2",
         "image": "template2.png",
-        "prompt": "cartoon,color"
+        "prompt": "portrait, impressionist painting, loose brushwork, vibrant color, light and shadow play"
     },
     {
         "id": "3",
         "image": "template3.png",
-        "prompt": "painting,vibrant"
+        "prompt": "portrait, the legend of zelda, anime"
     },
     {
         "id": "4",
         "image": "template4.png",
-        "prompt": "portrait"
+        "prompt": "portrait, flat papercut style, silhouette, clean cuts, paper, sharp edges, minimalist,color block,man"
     }
     
 ]
