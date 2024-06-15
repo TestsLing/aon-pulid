@@ -6,8 +6,8 @@
 		<div class="container">
 			<div class="banner">
 				<img src="../assets/images/banner.png" mode=""></img>
-				<p>AON PULID</p>
-				<p>一键进行图片风格变化</p>
+				<p>{{ appData.title }}</p>
+				<p>{{ appData.subtitle }}</p>
 			</div>
 			<div class="uni-form-item uni-column">
 				<div class="title">上传图片</div>
@@ -92,6 +92,7 @@ const submitImgUrl = ref('');
 const templateList = ref([]);
 const templateId = ref(1);
 const prompt = ref('');
+const appData = process.env?.appData || {}
 
 const maxSize = 30 * 1024 * 1024;
 function goToComplete(url) {
