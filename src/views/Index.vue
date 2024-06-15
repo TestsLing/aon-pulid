@@ -187,11 +187,11 @@ const formSubmit = async () => {
 				"output_quality": 80,
 				"generation_mode": "fidelity",
 				"main_face_image": submitImgUrl.value,
-				"negative_prompt": "flaws in the eyes, flaws in the face, flaws, lowres, non-HDRi, low quality, worst quality,artifacts noise, text, watermark, glitch, deformed, mutated, ugly, disfigured, hands, low resolution, partially rendered objects, deformed or partially rendered eyes, deformed, deformed eyeballs, cross-eyed,blurry"
+				//"negative_prompt": "flaws in the eyes, flaws in the face, flaws, lowres, non-HDRi, low quality, worst quality,artifacts noise, text, watermark, glitch, deformed, mutated, ugly, disfigured, hands, low resolution, partially rendered objects, deformed or partially rendered eyes, deformed, deformed eyeballs, cross-eyed,blurry"
 			}
 		}  
 		console.log("formSubmit data", data);    
-		let response = await aonet.prediction("/predictions/ai/face-swap", data); 
+		let response = await aonet.prediction("/predictions/ai/pulid", data); 
 		if (response.task.exec_code == 200 && response.task.is_success) {
 			showLoading.value = false
 
@@ -227,10 +227,11 @@ async function getTemplateList() {
 }
 
 function selectTemplate(id, imageUrl, prompt_) {
-	console.log("imageUrl", imageUrl)
 	templateId.value = id
 	swapImgUrl.value = imageUrl
 	prompt.value = prompt_
+	console.log("imageUrl", imageUrl)
+	console.log("prompt", prompt_)
 }
 
 onMounted(() => {

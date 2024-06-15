@@ -2,22 +2,22 @@
     {
         "id": "1",
         "image": "template1.png",
-        "prompt": "I am a cyber style."
+        "prompt": "cyberpunk, dark"
     },
     {
         "id": "2",
         "image": "template2.png",
-        "prompt": "I am a cartoon style."
+        "prompt": "cartoon,color"
     },
     {
         "id": "3",
         "image": "template3.png",
-        "prompt": "I am an anime style."
+        "prompt": "painting,vibrant"
     },
     {
         "id": "4",
         "image": "template4.png",
-        "prompt": "I am an artistic style."
+        "prompt": "portrait"
     }
     
 ]
